@@ -466,20 +466,27 @@ class Callbook {
 
 	function get_plaincall($callsign) {
 		$split_callsign = explode('/', $callsign);
-		if (count($split_callsign) == 1) {				// case of plain callsign --> return callsign
+		$segments = count($split_callsign);
+		if ($segments == 1) {				// case of plain callsign --> return callsign
 			return $callsign;
-		}
-
-		// Case of known suffixes that are not part of the callsign
-		if (in_array(strtoupper($split_callsign[1]), array('LGT', 'AM', 'LH', 'A', 'B', 'R', 'T', 'X', 'D', 'P', 'M', 'MM', 'QRP', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'))) {
+		} elseif ($segments == 2) {
+			// Case of known suffixes that are not part of the callsign
+			if (in_array(strtoupper($split_callsign[1]), array('LGT', 'AM', 'LH', 'A', 'B', 'R', 'T', 'X', 'D', 'P', 'M', 'MM', 'QRP', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'))) {
+				return $split_callsign[0];
+			}
+			// case EA/FOABC --> return 1
+			if (strlen($split_callsign[1]) > 3) {	// Last Element longer than 3 chars? Take that as call
+				return $split_callsign[1];
+			}
+			// case F0ABC/KH6 --> return cell 0
 			return $split_callsign[0];
-		}
-		// case EA/FOABC --> return 1
-		if (strlen($split_callsign[1]) > 3) {	// Last Element longer than 3 chars? Take that as call
+		} elseif ($segments == 3) {		// Call has a pre- and suffix --> return middle segments
 			return $split_callsign[1];
+		} else {		// Call has more that 3 segments and is probably invalid --> return the largest piece
+			array_reduce($array, function ($carry, $item) {
+				return strlen($item) > strlen($carry ?? '') ? $item : $carry;
+			});
 		}
-		// case F0ABC/KH6 --> return cell 0
-		return $split_callsign[0];
 	}
 
 }
